@@ -1,0 +1,182 @@
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import "./App.css";
+
+function App() {
+    const [movies, setMovies] = useState([]);
+    const [newMovie, setNewMovie] = useState({
+        Title: "",
+        Director1: "",
+        Director2: "",
+        ReleaseDate: "",
+        IMDb: "",
+        Metascore: "",
+        CriticsScore: "",
+        AudienceScore: "",
+        Letterboxd: "",
+        CinemaScore: "",
+        Budget: "",
+        DomesticGross: "",
+        WorldwideGross: "",
+    });
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        console.log("Fetching movies from API...");
+        axios
+            .get("http://localhost:3000/movies")
+            .then((response) => {
+                console.log("Movies fetched successfully:", response.data);
+                setMovies(response.data);
+            })
+            .catch((error) => {
+                console.error("Error fetching movies:", error);
+            });
+    }, []);
+
+    const handleInputChange = (e) => {
+        setNewMovie({ ...newMovie, [e.target.name]: e.target.value });
+    };
+
+    const handleAddMovie = () => {
+        if (!newMovie.Title || !newMovie.Director1 || !newMovie.ReleaseDate || !newMovie.IMDb) {
+            alert("Please fill in all required fields.");
+            return;
+        }
+        console.log("Add Movie clicked", newMovie);
+        axios
+            .post("http://localhost:3000/movies", newMovie)
+            .then((response) => {
+                console.log("Movie added successfully:", response.data);
+                setMovies([...movies, response.data]);
+                setNewMovie({
+                    Title: "",
+                    Director1: "",
+                    Director2: "",
+                    ReleaseDate: "",
+                    IMDb: "",
+                    Metascore: "",
+                    CriticsScore: "",
+                    AudienceScore: "",
+                    Letterboxd: "",
+                    CinemaScore: "",
+                    Budget: "",
+                    DomesticGross: "",
+                    WorldwideGross: "",
+                });
+            })
+            .catch((error) => {
+                console.error("Error adding movie:", error);
+            });
+    };
+
+    const handleEditMovie = (id, updatedMovie) => {
+        axios
+            .put(`http://localhost:3000/movies/${id}`, updatedMovie)
+            .then((response) => {
+                setMovies(
+                    movies.map((movie) =>
+                        movie.ID === id ? { ...movie, ...updatedMovie } : movie
+                    )
+                );
+            })
+            .catch((error) => {
+                console.error("Error editing movie:", error);
+            });
+    };
+
+    const handleDeleteMovie = (id) => {
+        axios
+            .delete(`http://localhost:3000/movies/${id}`)
+            .then(() => {
+                setMovies(movies.filter((movie) => movie.ID !== id));
+            })
+            .catch((error) => {
+                console.error("Error deleting movie:", error);
+            });
+    };
+
+    return (
+        <div className="App">
+            <h1>Marvel Movies Database</h1>
+            <p>Explore movies, add new ones, edit, or delete them!</p>
+
+            {/* Loading spinner/message */}
+            {loading ? (
+                <p>Loading Movies...</p>
+            ) : (
+                <>
+                    <h2>Add a New Movie</h2>
+                    <form>
+                        <input
+                            type="text"
+                            name="Title"
+                            placeholder="Title"
+                            value={newMovie.Title}
+                            onChange={handleInputChange}
+                        />
+                        <input
+                            type="text"
+                            name="Director1"
+                            placeholder="Director 1"
+                            value={newMovie.Director1}
+                            onChange={handleInputChange}
+                        />
+                        <input
+                            type="text"
+                            name="Director2"
+                            placeholder="Director 2"
+                            value={newMovie.Director2}
+                            onChange={handleInputChange}
+                        />
+                        <input
+                            type="date"
+                            name="ReleaseDate"
+                            value={newMovie.ReleaseDate}
+                            onChange={handleInputChange}
+                        />
+                        <input
+                            type="text"
+                            name="IMDb"
+                            placeholder="IMDb Rating"
+                            value={newMovie.IMDb}
+                            onChange={handleInputChange}
+                        />
+                        <button type="button" onClick={handleAddMovie}>
+                            Add Movie
+                        </button>
+                    </form>
+
+                    <h2>Movies List</h2>
+                    <ul>
+                        {movies.map((movie) => (
+                            <li key={movie.ID}>
+                                {movie.Title} - Directed by {movie.Director1}{" "}
+                                {movie.Director2 && `and ${movie.Director2}`}
+                                <button
+                                    onClick={() =>
+                                        handleEditMovie(movie.ID, {
+                                            Title: "Updated Title",
+                                            IMDb: movie.IMDb,
+                                        })
+                                    }
+                                >
+                                    Edit
+                                </button>
+                                <button
+                                    onClick={() =>
+                                        handleDeleteMovie(movie.ID)
+                                    }
+                                >
+                                    Delete
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
+                </>
+            )}
+        </div>
+    );
+}
+
+export default App;
